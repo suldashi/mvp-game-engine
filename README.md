@@ -1,0 +1,1 @@
+A template for game engine development in JS. The entry file for the engine is the `src/engine.js` file. To build, run the `gulp` command, consult the `gulpfile.js` file for the rest of the commands.
