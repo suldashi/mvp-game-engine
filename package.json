@@ -18,7 +18,8 @@
   "license": "MIT",
   "dependencies": {
     "express": "^4.17.1",
-    "mainloop.js": "^1.0.4"
+    "mainloop.js": "^1.0.4",
+    "pixi.js": "^5.1.5"
   },
   "devDependencies": {
     "browserify": "^16.5.0",
