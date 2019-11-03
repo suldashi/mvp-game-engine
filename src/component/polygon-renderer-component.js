@@ -1,4 +1,4 @@
-class PolygonRenderer {
+class PolygonRendererComponent {
     constructor(graphics, rectangle) {
         this.rectangle = rectangle;
         this.graphics = graphics;
@@ -11,4 +11,4 @@ class PolygonRenderer {
     }
 }
 
-module.exports = PolygonRenderer;
+module.exports = PolygonRendererComponent;

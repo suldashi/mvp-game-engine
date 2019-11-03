@@ -1,27 +1,32 @@
 const MainLoop = require("mainloop.js");
-const PIXI = require("pixi.js");
 const config = require("./config");
-const Rectangle = require("./rectangle");
-const PolygonRenderer = require("./polygon-renderer");
 const Vec2 = require("./vec2");
+const Entity = require("./entity");
+const UserControlSystem = require("./system/user-control-system");
+const GraphicsSystem = require("./system/graphics-system");
+const PhysicsSystem = require("./system/physics-system");
 
-const pixiApp = new PIXI.Application({width: config.screenWidth, height: config.screenHeight, antialias: true});
-const graphics = new PIXI.Graphics();
-pixiApp.stage.addChild(graphics);
-const parentElement = document.getElementById(config.DOMContainerElement);
-parentElement.appendChild(pixiApp.view);
+//system instances
+const userControlSystem = new UserControlSystem();
+const graphicsSystem = new GraphicsSystem();
+const physicsSystem = new PhysicsSystem();
 
-let rectangle = new Rectangle(new Vec2(0,0), new Vec2(100,100));
-let rectangleRenderer = new PolygonRenderer(graphics, rectangle);
+//A player object is an entity with components attached to it
+let player = new Entity();
+let rectangleBody = physicsSystem.createRectangleBodyComponent(new Vec2(0,0), new Vec2(100,100));
+let playerRenderer = graphicsSystem.createPolygonRendererComponent(rectangleBody);
+let playerController = userControlSystem.createPlayerControlComponent(rectangleBody);
+player.attachComponent(rectangleBody);
+player.attachComponent(playerRenderer);
+player.attachComponent(playerController);
 
-let translationVector = new Vec2(200,150);  //pixels per second
 
 MainLoop.setSimulationTimestep(config.timestep)
 .setBegin(() => {
-    //handle input here
+    userControlSystem.update();
 }).setUpdate((delta) => {
-    rectangle.translate(translationVector.scale(delta/1000));
+    let scaledDelta = delta/1000;
+    physicsSystem.update(scaledDelta);
 }).setDraw(() => {
-    graphics.clear();
-    rectangleRenderer.update();
+    graphicsSystem.update();
 }).start();

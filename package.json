@@ -19,7 +19,8 @@
   "dependencies": {
     "express": "^4.17.1",
     "mainloop.js": "^1.0.4",
-    "pixi.js": "^5.1.5"
+    "pixi.js": "^5.1.5",
+    "uuid": "^3.3.3"
   },
   "devDependencies": {
     "browserify": "^16.5.0",

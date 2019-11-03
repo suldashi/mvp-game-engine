@@ -7,7 +7,7 @@ const port = 8080;
 
 app.use('/public', express.static(path.resolve(__dirname,"..",'public')));
 
-app.get("*",(req,res) => {
+app.use((req,res) => {
 	res.sendFile(path.resolve("public/index.html"));
 });
 

@@ -44537,45 +44537,238 @@ module.exports = {
 };
 
 },{}],53:[function(require,module,exports){
-const ticksPerSecond = 60;
-const timestep = 1000/ticksPerSecond;
+var v1 = require('./v1');
+var v4 = require('./v4');
 
-module.exports = {
-    screenWidth: 800,
-    screenHeight: 600,
-    timestep,
-    DOMContainerElement: "root"
+var uuid = v4;
+uuid.v1 = v1;
+uuid.v4 = v4;
+
+module.exports = uuid;
+
+},{"./v1":56,"./v4":57}],54:[function(require,module,exports){
+/**
+ * Convert array of 16 byte values to UUID string format of the form:
+ * XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+ */
+var byteToHex = [];
+for (var i = 0; i < 256; ++i) {
+  byteToHex[i] = (i + 0x100).toString(16).substr(1);
 }
-},{}],54:[function(require,module,exports){
-const MainLoop = require("mainloop.js");
-const PIXI = require("pixi.js");
-const config = require("./config");
-const Rectangle = require("./rectangle");
-const PolygonRenderer = require("./polygon-renderer");
-const Vec2 = require("./vec2");
 
-const pixiApp = new PIXI.Application({width: config.screenWidth, height: config.screenHeight, antialias: true});
-const graphics = new PIXI.Graphics();
-pixiApp.stage.addChild(graphics);
-const parentElement = document.getElementById(config.DOMContainerElement);
-parentElement.appendChild(pixiApp.view);
+function bytesToUuid(buf, offset) {
+  var i = offset || 0;
+  var bth = byteToHex;
+  // join used to fix memory issue caused by concatenation: https://bugs.chromium.org/p/v8/issues/detail?id=3175#c4
+  return ([bth[buf[i++]], bth[buf[i++]], 
+	bth[buf[i++]], bth[buf[i++]], '-',
+	bth[buf[i++]], bth[buf[i++]], '-',
+	bth[buf[i++]], bth[buf[i++]], '-',
+	bth[buf[i++]], bth[buf[i++]], '-',
+	bth[buf[i++]], bth[buf[i++]],
+	bth[buf[i++]], bth[buf[i++]],
+	bth[buf[i++]], bth[buf[i++]]]).join('');
+}
 
-let rectangle = new Rectangle(new Vec2(0,0), new Vec2(100,100));
-let rectangleRenderer = new PolygonRenderer(graphics, rectangle);
+module.exports = bytesToUuid;
 
-let translationVector = new Vec2(200,150);  //pixels per second
+},{}],55:[function(require,module,exports){
+// Unique ID creation requires a high quality random # generator.  In the
+// browser this is a little complicated due to unknown quality of Math.random()
+// and inconsistent support for the `crypto` API.  We do the best we can via
+// feature-detection
 
-MainLoop.setSimulationTimestep(config.timestep)
-.setBegin(() => {
-    //handle input here
-}).setUpdate((delta) => {
-    rectangle.translate(translationVector.scale(delta/1000));
-}).setDraw(() => {
-    graphics.clear();
-    rectangleRenderer.update();
-}).start();
-},{"./config":53,"./polygon-renderer":55,"./rectangle":56,"./vec2":57,"mainloop.js":39,"pixi.js":43}],55:[function(require,module,exports){
-class PolygonRenderer {
+// getRandomValues needs to be invoked in a context where "this" is a Crypto
+// implementation. Also, find the complete implementation of crypto on IE11.
+var getRandomValues = (typeof(crypto) != 'undefined' && crypto.getRandomValues && crypto.getRandomValues.bind(crypto)) ||
+                      (typeof(msCrypto) != 'undefined' && typeof window.msCrypto.getRandomValues == 'function' && msCrypto.getRandomValues.bind(msCrypto));
+
+if (getRandomValues) {
+  // WHATWG crypto RNG - http://wiki.whatwg.org/wiki/Crypto
+  var rnds8 = new Uint8Array(16); // eslint-disable-line no-undef
+
+  module.exports = function whatwgRNG() {
+    getRandomValues(rnds8);
+    return rnds8;
+  };
+} else {
+  // Math.random()-based (RNG)
+  //
+  // If all else fails, use Math.random().  It's fast, but is of unspecified
+  // quality.
+  var rnds = new Array(16);
+
+  module.exports = function mathRNG() {
+    for (var i = 0, r; i < 16; i++) {
+      if ((i & 0x03) === 0) r = Math.random() * 0x100000000;
+      rnds[i] = r >>> ((i & 0x03) << 3) & 0xff;
+    }
+
+    return rnds;
+  };
+}
+
+},{}],56:[function(require,module,exports){
+var rng = require('./lib/rng');
+var bytesToUuid = require('./lib/bytesToUuid');
+
+// **`v1()` - Generate time-based UUID**
+//
+// Inspired by https://github.com/LiosK/UUID.js
+// and http://docs.python.org/library/uuid.html
+
+var _nodeId;
+var _clockseq;
+
+// Previous uuid creation time
+var _lastMSecs = 0;
+var _lastNSecs = 0;
+
+// See https://github.com/broofa/node-uuid for API details
+function v1(options, buf, offset) {
+  var i = buf && offset || 0;
+  var b = buf || [];
+
+  options = options || {};
+  var node = options.node || _nodeId;
+  var clockseq = options.clockseq !== undefined ? options.clockseq : _clockseq;
+
+  // node and clockseq need to be initialized to random values if they're not
+  // specified.  We do this lazily to minimize issues related to insufficient
+  // system entropy.  See #189
+  if (node == null || clockseq == null) {
+    var seedBytes = rng();
+    if (node == null) {
+      // Per 4.5, create and 48-bit node id, (47 random bits + multicast bit = 1)
+      node = _nodeId = [
+        seedBytes[0] | 0x01,
+        seedBytes[1], seedBytes[2], seedBytes[3], seedBytes[4], seedBytes[5]
+      ];
+    }
+    if (clockseq == null) {
+      // Per 4.2.2, randomize (14 bit) clockseq
+      clockseq = _clockseq = (seedBytes[6] << 8 | seedBytes[7]) & 0x3fff;
+    }
+  }
+
+  // UUID timestamps are 100 nano-second units since the Gregorian epoch,
+  // (1582-10-15 00:00).  JSNumbers aren't precise enough for this, so
+  // time is handled internally as 'msecs' (integer milliseconds) and 'nsecs'
+  // (100-nanoseconds offset from msecs) since unix epoch, 1970-01-01 00:00.
+  var msecs = options.msecs !== undefined ? options.msecs : new Date().getTime();
+
+  // Per 4.2.1.2, use count of uuid's generated during the current clock
+  // cycle to simulate higher resolution clock
+  var nsecs = options.nsecs !== undefined ? options.nsecs : _lastNSecs + 1;
+
+  // Time since last uuid creation (in msecs)
+  var dt = (msecs - _lastMSecs) + (nsecs - _lastNSecs)/10000;
+
+  // Per 4.2.1.2, Bump clockseq on clock regression
+  if (dt < 0 && options.clockseq === undefined) {
+    clockseq = clockseq + 1 & 0x3fff;
+  }
+
+  // Reset nsecs if clock regresses (new clockseq) or we've moved onto a new
+  // time interval
+  if ((dt < 0 || msecs > _lastMSecs) && options.nsecs === undefined) {
+    nsecs = 0;
+  }
+
+  // Per 4.2.1.2 Throw error if too many uuids are requested
+  if (nsecs >= 10000) {
+    throw new Error('uuid.v1(): Can\'t create more than 10M uuids/sec');
+  }
+
+  _lastMSecs = msecs;
+  _lastNSecs = nsecs;
+  _clockseq = clockseq;
+
+  // Per 4.1.4 - Convert from unix epoch to Gregorian epoch
+  msecs += 12219292800000;
+
+  // `time_low`
+  var tl = ((msecs & 0xfffffff) * 10000 + nsecs) % 0x100000000;
+  b[i++] = tl >>> 24 & 0xff;
+  b[i++] = tl >>> 16 & 0xff;
+  b[i++] = tl >>> 8 & 0xff;
+  b[i++] = tl & 0xff;
+
+  // `time_mid`
+  var tmh = (msecs / 0x100000000 * 10000) & 0xfffffff;
+  b[i++] = tmh >>> 8 & 0xff;
+  b[i++] = tmh & 0xff;
+
+  // `time_high_and_version`
+  b[i++] = tmh >>> 24 & 0xf | 0x10; // include version
+  b[i++] = tmh >>> 16 & 0xff;
+
+  // `clock_seq_hi_and_reserved` (Per 4.2.2 - include variant)
+  b[i++] = clockseq >>> 8 | 0x80;
+
+  // `clock_seq_low`
+  b[i++] = clockseq & 0xff;
+
+  // `node`
+  for (var n = 0; n < 6; ++n) {
+    b[i + n] = node[n];
+  }
+
+  return buf ? buf : bytesToUuid(b);
+}
+
+module.exports = v1;
+
+},{"./lib/bytesToUuid":54,"./lib/rng":55}],57:[function(require,module,exports){
+var rng = require('./lib/rng');
+var bytesToUuid = require('./lib/bytesToUuid');
+
+function v4(options, buf, offset) {
+  var i = buf && offset || 0;
+
+  if (typeof(options) == 'string') {
+    buf = options === 'binary' ? new Array(16) : null;
+    options = null;
+  }
+  options = options || {};
+
+  var rnds = options.random || (options.rng || rng)();
+
+  // Per 4.4, set bits for version and `clock_seq_hi_and_reserved`
+  rnds[6] = (rnds[6] & 0x0f) | 0x40;
+  rnds[8] = (rnds[8] & 0x3f) | 0x80;
+
+  // Copy bytes to buffer, if provided
+  if (buf) {
+    for (var ii = 0; ii < 16; ++ii) {
+      buf[i + ii] = rnds[ii];
+    }
+  }
+
+  return buf || bytesToUuid(rnds);
+}
+
+module.exports = v4;
+
+},{"./lib/bytesToUuid":54,"./lib/rng":55}],58:[function(require,module,exports){
+const Vec2 = require("../vec2");
+
+class PlayerControlComponent {
+    constructor(bodyComponent, userControlSystem) {
+        this.bodyComponent = bodyComponent;
+        this.userControlSystem = userControlSystem;
+    }
+
+    update() {
+        let controls = this.userControlSystem.getControls();
+        let velocityVector = new Vec2((controls.right?200:0)+(controls.left?-200:0),(controls.down?200:0)+(controls.up?-200:0));
+        this.bodyComponent.setVelocity(velocityVector);
+    }
+}
+
+module.exports = PlayerControlComponent;
+},{"../vec2":67}],59:[function(require,module,exports){
+class PolygonRendererComponent {
     constructor(graphics, rectangle) {
         this.rectangle = rectangle;
         this.graphics = graphics;
@@ -44588,22 +44781,212 @@ class PolygonRenderer {
     }
 }
 
-module.exports = PolygonRenderer;
-},{}],56:[function(require,module,exports){
-const Vec2 = require("./vec2");
+module.exports = PolygonRendererComponent;
+},{}],60:[function(require,module,exports){
+const Vec2 = require("../vec2");
 
-class Rectangle {
+class RectangleBodyComponent {
     constructor(topLeft, bottomRight) {
         this.points = [topLeft.clone(),new Vec2(bottomRight.x,topLeft.y),bottomRight.clone(),new Vec2(topLeft.x,bottomRight.y)];
+        this.velocity = new Vec2(0,0);
     }
 
-    translate(translationVector) {
-        this.points.map(x => x.addToThis(translationVector));
+    setVelocity(newVelocity) {
+        this.velocity = newVelocity;
+    }
+
+    update(delta) {
+        this.points.forEach(x => x.addToThis(this.velocity.scale(delta)));
     }
 }
 
-module.exports = Rectangle;
-},{"./vec2":57}],57:[function(require,module,exports){
+module.exports = RectangleBodyComponent;
+},{"../vec2":67}],61:[function(require,module,exports){
+const ticksPerSecond = 60;
+const timestep = 1000/ticksPerSecond;
+
+module.exports = {
+    screenWidth: 800,
+    screenHeight: 600,
+    timestep,
+    DOMContainerElement: "root"
+}
+},{}],62:[function(require,module,exports){
+const MainLoop = require("mainloop.js");
+const config = require("./config");
+const Vec2 = require("./vec2");
+const Entity = require("./entity");
+const UserControlSystem = require("./system/user-control-system");
+const GraphicsSystem = require("./system/graphics-system");
+const PhysicsSystem = require("./system/physics-system");
+
+//system instances
+const userControlSystem = new UserControlSystem();
+const graphicsSystem = new GraphicsSystem();
+const physicsSystem = new PhysicsSystem();
+
+//A player object is an entity with components attached to it
+let player = new Entity();
+let rectangleBody = physicsSystem.createRectangleBodyComponent(new Vec2(0,0), new Vec2(100,100));
+let playerRenderer = graphicsSystem.createPolygonRendererComponent(rectangleBody);
+let playerController = userControlSystem.createPlayerControlComponent(rectangleBody);
+player.attachComponent(rectangleBody);
+player.attachComponent(playerRenderer);
+player.attachComponent(playerController);
+
+
+MainLoop.setSimulationTimestep(config.timestep)
+.setBegin(() => {
+    userControlSystem.update();
+}).setUpdate((delta) => {
+    let scaledDelta = delta/1000;
+    physicsSystem.update(scaledDelta);
+}).setDraw(() => {
+    graphicsSystem.update();
+}).start();
+},{"./config":61,"./entity":63,"./system/graphics-system":64,"./system/physics-system":65,"./system/user-control-system":66,"./vec2":67,"mainloop.js":39}],63:[function(require,module,exports){
+const uuid = require("uuid").v4;
+
+class Entity {
+    constructor() {
+        this.id = uuid();
+        this.components = [];
+    }
+
+    attachComponent(component) {
+        this.components.push(component);
+    }
+}
+
+module.exports = Entity;
+},{"uuid":53}],64:[function(require,module,exports){
+const PIXI = require("pixi.js");
+
+const config = require("../config");
+const PolygonRendererComponent = require("../component/polygon-renderer-component");
+
+class GraphicsSystem {
+    constructor() {
+        PIXI.utils.skipHello();
+        this.pixiApp = new PIXI.Application({width: config.screenWidth, height: config.screenHeight, antialias: true});
+        this.graphics = new PIXI.Graphics();
+        this.pixiApp.stage.addChild(this.graphics);
+        this.parentElement = document.getElementById(config.DOMContainerElement);
+        this.parentElement.appendChild(this.pixiApp.view);
+        this.components = [];
+    }
+
+    createPolygonRendererComponent(polygon) {
+        let polygonRendererComponent = new PolygonRendererComponent(this.graphics, polygon);
+        this.components.push(polygonRendererComponent);
+        return polygonRendererComponent;
+    }
+
+    update() {
+        this.graphics.clear();
+        for(var i in this.components) {
+            this.components[i].update();
+        }
+    }
+}
+
+module.exports = GraphicsSystem;
+},{"../component/polygon-renderer-component":59,"../config":61,"pixi.js":43}],65:[function(require,module,exports){
+const RectangleBodyComponent = require("../component/rectangle-body-component");
+
+class PhysicsSystem {
+    constructor() {
+        this.components = [];
+    }
+
+    createRectangleBodyComponent(topLeft, bottomRight) {
+        let rectangleBody = new RectangleBodyComponent(topLeft, bottomRight);
+        this.components.push(rectangleBody);
+        return rectangleBody;
+    }
+
+    update(delta) {
+        for(var i in this.components) {
+            this.components[i].update(delta);
+        }
+    }
+}
+
+module.exports = PhysicsSystem;
+},{"../component/rectangle-body-component":60}],66:[function(require,module,exports){
+const PlayerControlComponent = require("../component/player-control-component");
+
+class UserControlSystem {
+    constructor() {
+        this.components = [];
+        this.activeControls = {
+            up: false,
+            down: false,
+            left: false,
+            right: false
+        }
+        
+        this.frameControls = {
+            up: false,
+            down: false,
+            left: false,
+            right: false
+        }
+
+        document.addEventListener('keydown', (ev) => {
+            if(ev.code === "KeyW") {
+                this.activeControls.up = true;
+            }
+            if(ev.code === "KeyS") {
+                this.activeControls.down = true;
+            }
+            if(ev.code === "KeyA") {
+                this.activeControls.left = true;
+            }
+            if(ev.code === "KeyD") {
+                this.activeControls.right = true;
+            }
+        });
+        
+        document.addEventListener('keyup', (ev) => {
+            if(ev.code === "KeyW") {
+                this.activeControls.up = false;
+            }
+            if(ev.code === "KeyS") {
+                this.activeControls.down = false;
+            }
+            if(ev.code === "KeyA") {
+                this.activeControls.left = false;
+            }
+            if(ev.code === "KeyD") {
+                this.activeControls.right = false;
+            }
+        });
+    }
+
+    createPlayerControlComponent(bodyComponent) {
+        let playerControlComponent = new PlayerControlComponent(bodyComponent, this);
+        this.components.push(playerControlComponent);
+        return playerControlComponent;
+    }
+
+    getControls() {
+        return this.frameControls;
+    }
+
+    update() {
+        this.frameControls.up = this.activeControls.up;
+        this.frameControls.down = this.activeControls.down;
+        this.frameControls.left = this.activeControls.left;
+        this.frameControls.right = this.activeControls.right;
+        for(var i in this.components) {
+            this.components[i].update();
+        }
+    }
+}
+
+module.exports = UserControlSystem;
+},{"../component/player-control-component":58}],67:[function(require,module,exports){
 //Immutable vector class. All operations return a new object instead of modifying the existing vector.
 //Don't directly modify x and y
 
@@ -44721,4 +45104,4 @@ class Vec2 {
 }
 window.Vec2 = Vec2;
 module.exports = Vec2;
-},{}]},{},[54]);
+},{}]},{},[62]);
