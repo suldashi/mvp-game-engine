@@ -1,6 +1,6 @@
 # MVP Game Engine
 ### What is it?
-A minimal implementation of a game engine and example of the [ECS - Entity-component-system](https://en.wikipedia.org/wiki/Entity_component_system) pattern, written in JS and used for browser games.
+A minimal implementation of a game engine and example of the [ECS - Entity-component-system](https://en.wikipedia.org/wiki/Entity_component_system) pattern, written in JS and used for browser games. [Click here to see it in action](https://suldashi.github.io/mvp-game-engine/index.html)
 ### How do I use it?
 1. Clone the repo and run `npm install` to install the dependencies. 
 2. Install `gulp` globally in your computer, you can do that by running `npm install -g gulp`.
