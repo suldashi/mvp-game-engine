@@ -1,6 +1,6 @@
 {
   "name": "game-engine-starter-template",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A template for developing and teaching the development of JS game engine components",
   "main": "app/index.js",
   "scripts": {
