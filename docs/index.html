@@ -1,0 +1,47 @@
+<!doctype html>
+<html>
+<head>
+	<link rel="stylesheet" type="text/css" href="public/style.css">
+</head>
+<body>
+	<div id="root"></div>
+	<div>WASD moves the "player" square</div>
+	<div>
+	<h1>MVP Game Engine</h1>
+	<h3>What is it?</h3>
+	<p>A minimal implementation of a game engine and example of the <a href="https://en.wikipedia.org/wiki/Entity_component_system">ECS - Entity-component-system pattern</a>, written in JS and used for browser games.</p>
+
+	<h3>How do I use it?</h3><ol>
+	<li>Clone the repo and run <code>npm install</code> to install the dependencies.</li>
+	<li>Install gulp globally in your computer, you can do that by running <code>npm install -g gulp</code>.</li>
+	<li>Run the <code>npm run dev</code> command to build a dev version of the engine, it will be deposited in <code>public/js/engine.js</code>.</li>
+	<li>Run the <code>npm start</code> command to start the webserver, your game will then be available on <a href="http://localhost:8080">http://localhost:8080</a></li>
+	</ol>
+	<h3>What is ECS?</h3>
+	<p>ECS stands for Entity-component-system, a design pattern used mostly in game development. In ECS, all game objects are <em>entities</em> which are made up of multiple <em>components</em> attached to them that define their data and functionality. The behavior of these components is managed by various <em>systems</em> that interact in various ways to implement the rules of the video game.</p>
+
+	<p>In ECS the codebase is loosely coupled, allowing us to mix and match components as needed to create potentially limitless unique types of game objects. Using traditional OOP we would need to create very deep class hierarchies and tightly coupled systems, making code reuse and modification very difficult. For example, if I wanted to run the MVP Engine with node.js (for example as a multiplayer server), all I would have to do is remove the graphics system and it would work exactly the same as in the browser.</p>
+
+	<h3>Tell me more about the engine...</h3>
+	<p>The engine entry point is the <code>src/engine.js</code> file, it's here that we create the <a href="https://gameprogrammingpatterns.com/game-loop.html">game loop</a>, instantiate the systems, and define our only game object, a green square that can be controlled by the user. Our game object contains three components attached to it, which define the ability to exist in the game world, to be rendered on the screen, and to be controlled by the user. These components are created and managed by their respective systems, located in the <code>src/system</code> directory. Each <a href="https://gameprogrammingpatterns.com/game-loop.html">timestep</a>, the systems update the state of the components under their control.</p>
+
+	<h3>It's just a green square in a black background!</h3>
+	<p>I removed as much as I could from a larger game engine to arrive at the minimal implementation that can be called a video game. It consists of these elements and nothing else:</p>
+	<ul>
+	<li>Accepts input from the player</li>
+	<li>Uses this input to change the behavior of the game in the game loop</li>
+	<li>Outputs a visible result on the screen every frame</li>
+	<p>Anything less than this would not work for a real-time video game, and adding more would not add essential functionality to the MVP.</p>
+	</ul>
+	<h3>What about sound, event bus, sequencing, timers, collision detection, physics, and all the others?</h3>
+	<p>They are beyond the scope of an MVP, and would not serve the educational purpose of this project. However, I do plan to add that functionality on top of what I have made here, so feel free to follow this repository for news and updates.</p>
+
+	<h3>What libraries are you using?</h3>
+	<p>I use <a href="https://www.pixijs.com/">PixiJS</a> for the graphics and <a href="https://github.com/IceCreamYou/MainLoop.js">mainloop.js</a> as the main loop.</p>
+
+	<h3>License?</h3>
+	MIT
+	</div>
+	<script src="public/js/engine.js"></script>
+</body>
+</html>
