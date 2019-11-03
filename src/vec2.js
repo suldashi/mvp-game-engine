@@ -113,5 +113,4 @@ class Vec2 {
         return this.matrix(cos,sin,-sin,cos);
     }
 }
-window.Vec2 = Vec2;
 module.exports = Vec2;

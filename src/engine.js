@@ -11,7 +11,7 @@ const userControlSystem = new UserControlSystem();
 const graphicsSystem = new GraphicsSystem();
 const physicsSystem = new PhysicsSystem();
 
-//A player object is an entity with components attached to it
+//A player object, like all game objects, is an entity with components attached to it
 let player = new Entity();
 let rectangleBody = physicsSystem.createRectangleBodyComponent(new Vec2(0,0), new Vec2(100,100));
 let playerRenderer = graphicsSystem.createPolygonRendererComponent(rectangleBody);

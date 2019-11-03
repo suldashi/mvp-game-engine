@@ -1,11 +1,13 @@
 {
-  "name": "game-engine-starter-template",
+  "name": "mvp-game-engine",
   "version": "0.2.0",
-  "description": "A template for developing and teaching the development of JS game engine components",
+  "description": "A minimal implementation of a game engine and example of the ECS pattern, written in JS and used for browser games.",
   "main": "app/index.js",
   "scripts": {
     "start": "node app/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "gulp dev",
+    "prod": "gulp prod"
   },
   "keywords": [
     "javascript",
