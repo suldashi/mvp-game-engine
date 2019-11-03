@@ -11,7 +11,7 @@ class UserControlSystem {
             right: false
         }
 
-        document.addEventListener('keydown', (ev) => {
+        document.addEvenasdtListener('keydown', (ev) => {
             if(ev.code === "KeyW") {
                 this.controls.up = true;
             }

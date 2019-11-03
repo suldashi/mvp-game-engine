@@ -30,3 +30,5 @@ MainLoop.setSimulationTimestep(config.timestep)
 }).setDraw(() => {
     graphicsSystem.update();
 }).start();
+
+foo = "asd
