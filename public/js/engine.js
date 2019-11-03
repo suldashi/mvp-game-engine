@@ -44806,10 +44806,10 @@ const ticksPerSecond = 60;
 const timestep = 1000/ticksPerSecond;
 
 module.exports = {
-    screenWidth: 800,
+    screenWidth: 600,
     screenHeight: 600,
     timestep,
-    DOMContainerElement: "root"
+    DOMContainerElementID: "root"
 }
 },{}],62:[function(require,module,exports){
 const MainLoop = require("mainloop.js");
@@ -44871,7 +44871,7 @@ class GraphicsSystem {
         this.pixiApp = new PIXI.Application({width: config.screenWidth, height: config.screenHeight, antialias: true});
         this.graphics = new PIXI.Graphics();
         this.pixiApp.stage.addChild(this.graphics);
-        this.parentElement = document.getElementById(config.DOMContainerElement);
+        this.parentElement = document.getElementById(config.DOMContainerElementID);
         this.parentElement.appendChild(this.pixiApp.view);
         this.components = [];
     }
