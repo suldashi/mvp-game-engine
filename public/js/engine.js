@@ -44919,14 +44919,8 @@ const PlayerControlComponent = require("../component/player-control-component");
 class UserControlSystem {
     constructor() {
         this.components = [];
-        this.activeControls = {
-            up: false,
-            down: false,
-            left: false,
-            right: false
-        }
         
-        this.frameControls = {
+        this.controls = {
             up: false,
             down: false,
             left: false,
@@ -44935,31 +44929,31 @@ class UserControlSystem {
 
         document.addEventListener('keydown', (ev) => {
             if(ev.code === "KeyW") {
-                this.activeControls.up = true;
+                this.controls.up = true;
             }
             if(ev.code === "KeyS") {
-                this.activeControls.down = true;
+                this.controls.down = true;
             }
             if(ev.code === "KeyA") {
-                this.activeControls.left = true;
+                this.controls.left = true;
             }
             if(ev.code === "KeyD") {
-                this.activeControls.right = true;
+                this.controls.right = true;
             }
         });
         
         document.addEventListener('keyup', (ev) => {
             if(ev.code === "KeyW") {
-                this.activeControls.up = false;
+                this.controls.up = false;
             }
             if(ev.code === "KeyS") {
-                this.activeControls.down = false;
+                this.controls.down = false;
             }
             if(ev.code === "KeyA") {
-                this.activeControls.left = false;
+                this.controls.left = false;
             }
             if(ev.code === "KeyD") {
-                this.activeControls.right = false;
+                this.controls.right = false;
             }
         });
     }
@@ -44971,14 +44965,10 @@ class UserControlSystem {
     }
 
     getControls() {
-        return this.frameControls;
+        return this.controls;
     }
 
     update() {
-        this.frameControls.up = this.activeControls.up;
-        this.frameControls.down = this.activeControls.down;
-        this.frameControls.left = this.activeControls.left;
-        this.frameControls.right = this.activeControls.right;
         for(var i in this.components) {
             this.components[i].update();
         }
