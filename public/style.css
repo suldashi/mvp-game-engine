@@ -20,6 +20,10 @@ body {
   display: none;
 }
 
+.control-instruction {
+  color :grey;
+}
+
 .touch-controls {
   display: none;
 }
