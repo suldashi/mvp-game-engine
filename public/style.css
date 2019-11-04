@@ -1,6 +1,58 @@
 html {
   box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+body {
+  padding: 0;
+  margin: 0;
 }
 *, *:before, *:after {
   box-sizing: inherit;
+}
+
+#root {
+  position: relative;
+  display: inline-block;
+}
+
+.control-large {
+  display: none;
+}
+
+.touch-controls {
+  display: none;
+}
+
+.keyboard-controls {
+  display: block;
+}
+
+@media only screen and (max-device-width: 768px) {
+  #root {
+    width: 100%;
+  }
+  #root canvas {
+    width: 100%;
+  }
+	.control-large {
+    display: block;
+		width: 100px;
+		height: 100px;
+		position: absolute;
+		bottom: 20px;
+		right: 20px;
+    background: url(touch_control.png) no-repeat;
+    background-color: lightgrey;
+    border-radius: 20px;
+    background-size: 50% 50%;
+    background-position: 25px 25px;
+  }
+  .touch-controls {
+    display: block;
+  }
+  
+  .keyboard-controls {
+    display: none;
+  }
 }

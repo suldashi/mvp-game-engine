@@ -44767,7 +44767,7 @@ class PlayerControlComponent {
 }
 
 module.exports = PlayerControlComponent;
-},{"../vec2":67}],59:[function(require,module,exports){
+},{"../vec2":69}],59:[function(require,module,exports){
 class PolygonRendererComponent {
     constructor(graphics, rectangle) {
         this.rectangle = rectangle;
@@ -44801,7 +44801,7 @@ class RectangleBodyComponent {
 }
 
 module.exports = RectangleBodyComponent;
-},{"../vec2":67}],61:[function(require,module,exports){
+},{"../vec2":69}],61:[function(require,module,exports){
 const ticksPerSecond = 60;
 const timestep = 1000/ticksPerSecond;
 
@@ -44844,7 +44844,7 @@ MainLoop.setSimulationTimestep(config.timestep)
 }).setDraw(() => {
     graphicsSystem.update();
 }).start();
-},{"./config":61,"./entity":63,"./system/graphics-system":64,"./system/physics-system":65,"./system/user-control-system":66,"./vec2":67,"mainloop.js":39}],63:[function(require,module,exports){
+},{"./config":61,"./entity":63,"./system/graphics-system":64,"./system/physics-system":66,"./system/user-control-system":68,"./vec2":69,"mainloop.js":39}],63:[function(require,module,exports){
 const uuid = require("uuid").v4;
 
 class Entity {
@@ -44892,34 +44892,8 @@ class GraphicsSystem {
 
 module.exports = GraphicsSystem;
 },{"../component/polygon-renderer-component":59,"../config":61,"pixi.js":43}],65:[function(require,module,exports){
-const RectangleBodyComponent = require("../component/rectangle-body-component");
-
-class PhysicsSystem {
-    constructor() {
-        this.components = [];
-    }
-
-    createRectangleBodyComponent(topLeft, bottomRight) {
-        let rectangleBody = new RectangleBodyComponent(topLeft, bottomRight);
-        this.components.push(rectangleBody);
-        return rectangleBody;
-    }
-
-    update(delta) {
-        for(var i in this.components) {
-            this.components[i].update(delta);
-        }
-    }
-}
-
-module.exports = PhysicsSystem;
-},{"../component/rectangle-body-component":60}],66:[function(require,module,exports){
-const PlayerControlComponent = require("../component/player-control-component");
-
-class UserControlSystem {
-    constructor() {
-        this.components = [];
-        
+class KeyboardControlSystem {
+    constructor() {        
         this.controls = {
             up: false,
             down: false,
@@ -44958,6 +44932,176 @@ class UserControlSystem {
         });
     }
 
+    getControls() {
+        return this.controls;
+    }
+}
+
+module.exports = KeyboardControlSystem;
+},{}],66:[function(require,module,exports){
+const RectangleBodyComponent = require("../component/rectangle-body-component");
+
+class PhysicsSystem {
+    constructor() {
+        this.components = [];
+    }
+
+    createRectangleBodyComponent(topLeft, bottomRight) {
+        let rectangleBody = new RectangleBodyComponent(topLeft, bottomRight);
+        this.components.push(rectangleBody);
+        return rectangleBody;
+    }
+
+    update(delta) {
+        for(var i in this.components) {
+            this.components[i].update(delta);
+        }
+    }
+}
+
+module.exports = PhysicsSystem;
+},{"../component/rectangle-body-component":60}],67:[function(require,module,exports){
+const config = require("../config");
+
+class TouchControlSystem {
+    constructor() {        
+        this.controls = {
+            up: false,
+            down: false,
+            left: false,
+            right: false
+        }
+
+        this.backgroundSize = 50;
+        this.containerSize = 100;
+        this.controlLimit = 20;
+        this.currentAngleNr = -1;
+
+        this.controlElement = document.createElement("div");
+        this.controlElement.className = "control-large";
+        let rootElement = document.getElementById(config.DOMContainerElementID);
+        rootElement.appendChild(this.controlElement);
+
+        this.touchHandler = (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            let touch = e.changedTouches[0];
+            let touchX = touch.clientX-this.controlElement.offsetLeft;
+            let touchY = touch.clientY-this.controlElement.offsetTop;
+            let nX = touchX - this.containerSize/2;
+            let nY = touchY - this.containerSize/2;
+            if(nX*nX+nY*nY>this.controlLimit) {
+                nX = this.controlLimit*nX/Math.sqrt(nX*nX+nY*nY);
+                nY = this.controlLimit*nY/Math.sqrt(nX*nX+nY*nY);
+            }
+            this.controlElement.style.backgroundPosition = `${nX+this.backgroundSize/2}px ${nY+this.backgroundSize/2}px`;
+            let offset = Math.PI/8;
+            let angle = -Math.atan2(nY,nX);
+            if(angle<0) {
+                angle+=Math.PI*2;
+            }
+            if((angle<=0+offset && angle>0) || (angle<=Math.PI*2 && angle>=Math.PI*2-offset)) {
+                let angleNr = 0;
+                if(this.currentAngleNr!==angleNr) {
+                    this.currentAngleNr = angleNr;
+                    this.controls.up = this.controls.down = this.controls.left = false;
+                    this.controls.right = true;
+                }
+                
+            }
+            else if(angle<=Math.PI/4+offset && angle>=Math.PI/4-offset) {
+                let angleNr = 1;
+                if(this.currentAngleNr!==angleNr) {
+                    this.currentAngleNr = angleNr;
+                    this.controls.down = this.controls.left = false;
+                    this.controls.up = this.controls.right = true;
+                }
+            }
+            else if(angle<=Math.PI/2+offset && angle>=Math.PI/2-offset) {
+                let angleNr = 2;
+                if(this.currentAngleNr!==angleNr) {
+                    this.currentAngleNr = angleNr;
+                    this.controls.right = this.controls.down = this.controls.left = false;
+                    this.controls.up =  true;
+                }
+            }
+            else if(angle<=3*Math.PI/4+offset && angle>=3*Math.PI/4-offset) {
+                let angleNr = 3;
+                if(this.currentAngleNr!==angleNr) {
+                    this.currentAngleNr = angleNr;
+                    this.controls.right = this.controls.down = false;
+                    this.controls.left = this.controls.up =  true;
+                }
+            }
+            else if(angle<=Math.PI+offset && angle>=Math.PI-offset) {
+                let angleNr = 4;
+                if(this.currentAngleNr!==angleNr) {
+                    this.currentAngleNr = angleNr;
+                    this.controls.up = this.controls.right = this.controls.down = false;
+                    this.controls.left = true;
+                }
+            }
+            else if(angle<=5*Math.PI/4+offset && angle>=5*Math.PI/4-offset) {
+                let angleNr = 5;
+                if(this.currentAngleNr!==angleNr) {
+                    this.currentAngleNr = angleNr;
+                    this.controls.up = this.controls.right = false;
+                    this.controls.down = this.controls.left = true;
+                }
+            }
+            else if(angle<=6*Math.PI/4+offset && angle>=6*Math.PI/4-offset) {
+                let angleNr = 6;
+                if(this.currentAngleNr!==angleNr) {
+                    this.currentAngleNr = angleNr;
+                    this.controls.left = this.controls.up = this.controls.right = false;
+                    this.controls.down = true;
+                }
+            }
+            else {
+                let angleNr = 7;
+                if(this.currentAngleNr!==angleNr) {
+                    this.currentAngleNr = angleNr;
+                    this.controls.left = this.controls.up = false;
+                    this.controls.right = this.controls.down = true;
+                }
+            }
+        };
+
+        this.controlElement.ontouchstart = this.touchHandler;
+        this.controlElement.ontouchmove = this.touchHandler;
+
+        this.controlElement.ontouchend = (e) => {
+            this.controlElement.style.backgroundPosition = `${this.containerSize/2-this.backgroundSize/2}px ${this.containerSize/2-this.backgroundSize/2}px`;
+            this.controls.up = this.controls.down = this.controls.left = this.controls.right = false;
+        }
+
+    }
+
+    getControls() {
+        return this.controls;
+    }
+}
+
+module.exports = TouchControlSystem;
+},{"../config":61}],68:[function(require,module,exports){
+const PlayerControlComponent = require("../component/player-control-component");
+const KeyboardControlSystem = require("./keyboard-control-system");
+const TouchControlSystem = require("./touch-control-system");
+
+class UserControlSystem {
+    constructor() {
+        this.components = [];
+        this.keyboardControlSystem = new KeyboardControlSystem();
+        this.touchControlSystem = new TouchControlSystem();
+
+        this.controls = {
+            up: false,
+            down: false,
+            left: false,
+            right: false
+        }
+    }
+
     createPlayerControlComponent(bodyComponent) {
         let playerControlComponent = new PlayerControlComponent(bodyComponent, this);
         this.components.push(playerControlComponent);
@@ -44965,6 +45109,12 @@ class UserControlSystem {
     }
 
     getControls() {
+        const keyboardControls = this.keyboardControlSystem.getControls();
+        const touchControls = this.touchControlSystem.getControls();
+        this.controls.up = keyboardControls.up | touchControls.up;
+        this.controls.down = keyboardControls.down | touchControls.down;
+        this.controls.left = keyboardControls.left | touchControls.left;
+        this.controls.right = keyboardControls.right | touchControls.right;
         return this.controls;
     }
 
@@ -44976,7 +45126,7 @@ class UserControlSystem {
 }
 
 module.exports = UserControlSystem;
-},{"../component/player-control-component":58}],67:[function(require,module,exports){
+},{"../component/player-control-component":58,"./keyboard-control-system":65,"./touch-control-system":67}],69:[function(require,module,exports){
 //Immutable vector class. All operations return a new object instead of modifying the existing vector.
 //Don't directly modify x and y
 

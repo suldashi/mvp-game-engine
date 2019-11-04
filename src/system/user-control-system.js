@@ -1,45 +1,19 @@
 const PlayerControlComponent = require("../component/player-control-component");
+const KeyboardControlSystem = require("./keyboard-control-system");
+const TouchControlSystem = require("./touch-control-system");
 
 class UserControlSystem {
     constructor() {
         this.components = [];
-        
+        this.keyboardControlSystem = new KeyboardControlSystem();
+        this.touchControlSystem = new TouchControlSystem();
+
         this.controls = {
             up: false,
             down: false,
             left: false,
             right: false
         }
-
-        document.addEventListener('keydown', (ev) => {
-            if(ev.code === "KeyW") {
-                this.controls.up = true;
-            }
-            if(ev.code === "KeyS") {
-                this.controls.down = true;
-            }
-            if(ev.code === "KeyA") {
-                this.controls.left = true;
-            }
-            if(ev.code === "KeyD") {
-                this.controls.right = true;
-            }
-        });
-        
-        document.addEventListener('keyup', (ev) => {
-            if(ev.code === "KeyW") {
-                this.controls.up = false;
-            }
-            if(ev.code === "KeyS") {
-                this.controls.down = false;
-            }
-            if(ev.code === "KeyA") {
-                this.controls.left = false;
-            }
-            if(ev.code === "KeyD") {
-                this.controls.right = false;
-            }
-        });
     }
 
     createPlayerControlComponent(bodyComponent) {
@@ -49,6 +23,12 @@ class UserControlSystem {
     }
 
     getControls() {
+        const keyboardControls = this.keyboardControlSystem.getControls();
+        const touchControls = this.touchControlSystem.getControls();
+        this.controls.up = keyboardControls.up | touchControls.up;
+        this.controls.down = keyboardControls.down | touchControls.down;
+        this.controls.left = keyboardControls.left | touchControls.left;
+        this.controls.right = keyboardControls.right | touchControls.right;
         return this.controls;
     }
 
