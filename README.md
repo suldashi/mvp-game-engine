@@ -1,6 +1,6 @@
 # MVP Game Engine
 ### What is it?
-A minimal implementation of a game engine and example of the [ECS - Entity-component-system](https://en.wikipedia.org/wiki/Entity_component_system) pattern, written in JS and used for browser games. [Click here to see it in action](https://suldashi.github.io/mvp-game-engine/index.html)
+A minimal implementation of a game engine and example of the [ECS - Entity-component-system](https://en.wikipedia.org/wiki/Entity_component_system) pattern, written in JS and used for browser games. [Click here to see it in action](https://suldashi.github.io/mvp-game-engine/index.html).
 ### How do I use it?
 1. Clone the repo and run `npm install` to install the dependencies. 
 2. Install `gulp` globally in your computer, you can do that by running `npm install -g gulp`.
@@ -17,6 +17,7 @@ I removed as much as I could from a larger game engine to arrive at the minimal 
 - Accepts input from the player
 - Uses this input to change the behavior of the game in the game loop
 - Outputs a visible result on the screen every frame
+
 Anything less than this would not work for a real-time video game, and adding more would not add essential functionality to the MVP.
 ### What about sound, event bus, sequencing, timers, collision detection, physics, and all the others?
 They are beyond the scope of an MVP, and would not serve the educational purpose of this project. However, I do plan to add that functionality on top of what I have made here, so feel free to follow this repository for news and updates.
