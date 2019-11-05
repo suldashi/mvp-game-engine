@@ -44767,7 +44767,7 @@ class PlayerControlComponent {
 }
 
 module.exports = PlayerControlComponent;
-},{"../vec2":71}],59:[function(require,module,exports){
+},{"../vec2":69}],59:[function(require,module,exports){
 class PolygonRendererComponent {
     constructor(graphics, rectangle) {
         this.rectangle = rectangle;
@@ -44796,79 +44796,12 @@ class RectangleBodyComponent {
     }
 
     update(delta) {
-        console.log(this.velocity);
         this.points.forEach(x => x.addToThis(this.velocity.scale(delta)));
     }
 }
 
 module.exports = RectangleBodyComponent;
-},{"../vec2":71}],61:[function(require,module,exports){
-class TimerComponent {
-    constructor() {
-        this.accumulatedTime = 0;
-        this.started = false;
-        this.ended = false;
-        this.repeating = false;
-        this.tasks = [];
-        this.taskTimeOffset = 0;
-        this.taskIndex = 0;
-    }
-
-    update(deltaInMilliseconds) {
-        if(this.started && !this.ended) {
-            this.accumulatedTime+=deltaInMilliseconds;
-            if(this.accumulatedTime>this.tasks[this.taskIndex].time) {
-                this.tasks[this.taskIndex].callback();
-                this.taskIndex++;
-                if(this.taskIndex===this.tasks.length) {
-                    if(this.repeating) {
-                        this.taskIndex = 0;
-                        this.accumulatedTime-=this.taskTimeOffset;
-                    }
-                    else {
-                        this.ended = true;
-                    }
-                }
-            }
-        }
-    }
-
-    addTask(timeInMilliseconds,callback) {
-        this.tasks.push({
-            time:timeInMilliseconds+this.taskTimeOffset,callback:callback
-        });
-        this.taskTimeOffset+=timeInMilliseconds;
-    }
-
-    start() {
-        if(this.tasks.length>0 && !this.started) {
-            this.started = true;
-            return true;
-        }
-        return false;
-    }
-
-    startAndRepeat() {
-        let started = this.start();
-        if(started) {
-            this.repeating = true;
-        }
-        return started;
-    }
-
-    stop() {
-        if(this.started && !this.ended) {
-            this.ended = true;
-            return true;
-        }
-        return false;
-    }
-
-    
-}
-
-module.exports = TimerComponent;
-},{}],62:[function(require,module,exports){
+},{"../vec2":69}],61:[function(require,module,exports){
 const ticksPerSecond = 60;
 const timestep = 1000/ticksPerSecond;
 
@@ -44878,7 +44811,7 @@ module.exports = {
     timestep,
     DOMContainerElementID: "root"
 }
-},{}],63:[function(require,module,exports){
+},{}],62:[function(require,module,exports){
 const MainLoop = require("mainloop.js");
 const config = require("./config");
 const Vec2 = require("./vec2");
@@ -44886,44 +44819,31 @@ const Entity = require("./entity");
 const UserControlSystem = require("./system/user-control-system");
 const GraphicsSystem = require("./system/graphics-system");
 const PhysicsSystem = require("./system/physics-system");
-const TimerSystem = require("./system/timer-system");
 
 //system instances
 const userControlSystem = new UserControlSystem();
 const graphicsSystem = new GraphicsSystem();
 const physicsSystem = new PhysicsSystem();
-const timerSystem = new TimerSystem();
 
 //A player object, like all game objects, is an entity with components attached to it
 let player = new Entity();
 let rectangleBody = physicsSystem.createRectangleBodyComponent(new Vec2(0,0), new Vec2(100,100));
 let playerRenderer = graphicsSystem.createPolygonRendererComponent(rectangleBody);
 let playerController = userControlSystem.createPlayerControlComponent(rectangleBody);
-let movementTimer = timerSystem.createTimerComponent();
-movementTimer.addTask(1000,() => {
-    rectangleBody.setVelocity(new Vec2(100,0));
-});
-movementTimer.addTask(1000,() => {
-    rectangleBody.setVelocity(new Vec2(-100,0));
-});
-movementTimer.startAndRepeat();
-player.attachComponent(movementTimer);
 player.attachComponent(rectangleBody);
 player.attachComponent(playerRenderer);
 player.attachComponent(playerController);
-
 
 MainLoop.setSimulationTimestep(config.timestep)
 .setBegin(() => {
     userControlSystem.update();
 }).setUpdate((delta) => {
     let scaledDelta = delta/1000;
-    timerSystem.update(delta);
     physicsSystem.update(scaledDelta);
 }).setDraw(() => {
     graphicsSystem.update();
 }).start();
-},{"./config":62,"./entity":64,"./system/graphics-system":65,"./system/physics-system":67,"./system/timer-system":68,"./system/user-control-system":70,"./vec2":71,"mainloop.js":39}],64:[function(require,module,exports){
+},{"./config":61,"./entity":63,"./system/graphics-system":64,"./system/physics-system":66,"./system/user-control-system":68,"./vec2":69,"mainloop.js":39}],63:[function(require,module,exports){
 const uuid = require("uuid").v4;
 
 class Entity {
@@ -44938,7 +44858,7 @@ class Entity {
 }
 
 module.exports = Entity;
-},{"uuid":53}],65:[function(require,module,exports){
+},{"uuid":53}],64:[function(require,module,exports){
 const PIXI = require("pixi.js");
 
 const config = require("../config");
@@ -44970,7 +44890,7 @@ class GraphicsSystem {
 }
 
 module.exports = GraphicsSystem;
-},{"../component/polygon-renderer-component":59,"../config":62,"pixi.js":43}],66:[function(require,module,exports){
+},{"../component/polygon-renderer-component":59,"../config":61,"pixi.js":43}],65:[function(require,module,exports){
 class KeyboardControlSystem {
     constructor() {        
         this.controls = {
@@ -45017,7 +44937,7 @@ class KeyboardControlSystem {
 }
 
 module.exports = KeyboardControlSystem;
-},{}],67:[function(require,module,exports){
+},{}],66:[function(require,module,exports){
 const RectangleBodyComponent = require("../component/rectangle-body-component");
 
 class PhysicsSystem {
@@ -45039,29 +44959,7 @@ class PhysicsSystem {
 }
 
 module.exports = PhysicsSystem;
-},{"../component/rectangle-body-component":60}],68:[function(require,module,exports){
-const TimerComponent = require("../component/timer-component");
-
-class TimerSystem {
-    constructor() {
-        this.timers = [];
-    }
-
-    createTimerComponent() {
-        let timer = new TimerComponent();
-        this.timers.push(timer);
-        return timer;
-    }
-
-    update(deltaInMilliseconds) {
-        for(var i in this.timers) {
-            this.timers[i].update(deltaInMilliseconds);
-        }
-    }
-}
-
-module.exports = TimerSystem;
-},{"../component/timer-component":61}],69:[function(require,module,exports){
+},{"../component/rectangle-body-component":60}],67:[function(require,module,exports){
 const config = require("../config");
 
 class TouchControlSystem {
@@ -45184,7 +45082,7 @@ class TouchControlSystem {
 }
 
 module.exports = TouchControlSystem;
-},{"../config":62}],70:[function(require,module,exports){
+},{"../config":61}],68:[function(require,module,exports){
 const PlayerControlComponent = require("../component/player-control-component");
 const KeyboardControlSystem = require("./keyboard-control-system");
 const TouchControlSystem = require("./touch-control-system");
@@ -45227,7 +45125,7 @@ class UserControlSystem {
 }
 
 module.exports = UserControlSystem;
-},{"../component/player-control-component":58,"./keyboard-control-system":66,"./touch-control-system":69}],71:[function(require,module,exports){
+},{"../component/player-control-component":58,"./keyboard-control-system":65,"./touch-control-system":67}],69:[function(require,module,exports){
 //Immutable vector class. All operations return a new object instead of modifying the existing vector.
 //Don't directly modify x and y
 
@@ -45344,4 +45242,4 @@ class Vec2 {
     }
 }
 module.exports = Vec2;
-},{}]},{},[63]);
+},{}]},{},[62]);

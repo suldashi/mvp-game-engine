@@ -11,6 +11,10 @@ app.get('/', (req,res) => {
 	res.sendFile(path.resolve("public/index.html"));
 });
 
+app.get('/lessons/:lessonName', (req,res) => {
+	res.sendFile(path.resolve(`public/${req.params.lessonName}/index.html`));
+});
+
 app.set("x-powered-by",false);
 
 server.listen(port);
