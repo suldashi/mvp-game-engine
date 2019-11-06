@@ -16,6 +16,11 @@ function setTimersVar() {
 	return Promise.resolve();
 }
 
+function setCollisionVar() {
+	taskPath = "collision";
+	return Promise.resolve();
+}
+
 function bundle() {
 	return browserify({entries:`src/${taskPath}/engine.js`,debug:false})
 		.bundle()
@@ -43,13 +48,15 @@ function compress() {
 gulp.task("browserify", bundle);
 gulp.task("setIntroVar", setIntroVar);
 gulp.task("setTimersVar", setTimersVar);
+gulp.task("setCollisionVar", setCollisionVar);
 
 //gulp.task("prod",gulp.series("browserify","minify"));
 //gulp.task("dev", gulp.series("browserify"));
 
 gulp.task("intro", gulp.series("setIntroVar","browserify"));
 gulp.task("timers", gulp.series("setTimersVar","browserify"));
+gulp.task("collision", gulp.series("setCollisionVar","browserify"));
 
 gulp.task("watch", watch);
-gulp.task("default", gulp.series("timers"));
-gulp.task("all", gulp.series("intro", "timers"));
+gulp.task("default", gulp.series("collision"));
+gulp.task("all", gulp.series("intro", "timers", "collision"));

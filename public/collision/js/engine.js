@@ -44751,6 +44751,31 @@ function v4(options, buf, offset) {
 module.exports = v4;
 
 },{"./lib/bytesToUuid":54,"./lib/rng":55}],58:[function(require,module,exports){
+class CollisionDetectionComponent {
+    constructor() {
+        console.log("wodan");
+    }
+}
+
+module.exports = CollisionDetectionComponent;
+},{}],59:[function(require,module,exports){
+const Vec2 = require("../vec2");
+
+class PlayerControlComponent {
+    constructor(bodyComponent, userControlSystem) {
+        this.bodyComponent = bodyComponent;
+        this.userControlSystem = userControlSystem;
+    }
+
+    update() {
+        let controls = this.userControlSystem.getControls();
+        let velocityVector = new Vec2((controls.right?200:0)+(controls.left?-200:0),(controls.down?200:0)+(controls.up?-200:0));
+        this.bodyComponent.setVelocity(velocityVector);
+    }
+}
+
+module.exports = PlayerControlComponent;
+},{"../vec2":71}],60:[function(require,module,exports){
 class PolygonRendererComponent {
     constructor(graphics, rectangle) {
         this.rectangle = rectangle;
@@ -44765,7 +44790,7 @@ class PolygonRendererComponent {
 }
 
 module.exports = PolygonRendererComponent;
-},{}],59:[function(require,module,exports){
+},{}],61:[function(require,module,exports){
 const Vec2 = require("../vec2");
 
 class RectangleBodyComponent {
@@ -44784,73 +44809,7 @@ class RectangleBodyComponent {
 }
 
 module.exports = RectangleBodyComponent;
-},{"../vec2":67}],60:[function(require,module,exports){
-class TimerComponent {
-    constructor() {
-        this.accumulatedTime = 0;
-        this.started = false;
-        this.ended = false;
-        this.repeating = false;
-        this.tasks = [];
-        this.taskTimeOffset = 0;
-        this.taskIndex = 0;
-    }
-
-    update(deltaInMilliseconds) {
-        if(this.started && !this.ended) {
-            this.accumulatedTime+=deltaInMilliseconds;
-            while(this.accumulatedTime>this.tasks[this.taskIndex].time && !this.ended) {
-                this.tasks[this.taskIndex].callback();
-                this.taskIndex++;
-                if(this.taskIndex===this.tasks.length) {
-                    if(this.repeating) {
-                        this.taskIndex = 0;
-                        this.accumulatedTime-=this.taskTimeOffset;
-                    }
-                    else {
-                        this.ended = true;
-                    }
-                }
-            }
-        }
-    }
-
-    addTask(timeInMilliseconds,callback) {
-        this.tasks.push({
-            time:timeInMilliseconds+this.taskTimeOffset,callback:callback
-        });
-        this.taskTimeOffset+=timeInMilliseconds;
-    }
-
-    start() {
-        if(this.tasks.length>0 && !this.started) {
-            this.started = true;
-            return true;
-        }
-        return false;
-    }
-
-    startAndRepeat() {
-        let started = this.start();
-        if(started) {
-            this.repeating = true;
-        }
-        return started;
-    }
-
-    stop() {
-        if(this.started && !this.ended) {
-            this.ended = true;
-            return true;
-        }
-        return false;
-    }
-
-    
-}
-
-module.exports = TimerComponent;
-},{}],61:[function(require,module,exports){
+},{"../vec2":71}],62:[function(require,module,exports){
 const ticksPerSecond = 60;
 const timestep = 1000/ticksPerSecond;
 
@@ -44860,54 +44819,43 @@ module.exports = {
     timestep,
     DOMContainerElementID: "root"
 }
-},{}],62:[function(require,module,exports){
+},{}],63:[function(require,module,exports){
 const MainLoop = require("mainloop.js");
 const config = require("./config");
 const Vec2 = require("./vec2");
 const Entity = require("./entity");
+const UserControlSystem = require("./system/user-control-system");
 const GraphicsSystem = require("./system/graphics-system");
 const PhysicsSystem = require("./system/physics-system");
-const TimerSystem = require("./system/timer-system");
+const CollisionDetectionSystem = require("./system/collision-detection-system");
 
-//system instances
+const userControlSystem = new UserControlSystem();
 const graphicsSystem = new GraphicsSystem();
 const physicsSystem = new PhysicsSystem();
-const timerSystem = new TimerSystem();
+const collisionDetectionSystem = new CollisionDetectionSystem();
 
-//A player object, like all game objects, is an entity with components attached to it
 let player = new Entity();
-let rectangleBody = physicsSystem.createRectangleBodyComponent(new Vec2(200,200), new Vec2(300,300));
+let rectangleBody = physicsSystem.createRectangleBodyComponent(new Vec2(100,100), new Vec2(200,200));
 let playerRenderer = graphicsSystem.createPolygonRendererComponent(rectangleBody);
-let movementTimer = timerSystem.createTimerComponent();
-movementTimer.addTask(1000,() => {
-    rectangleBody.setVelocity(new Vec2(100,0));
-});
-movementTimer.addTask(1000,() => {
-    rectangleBody.setVelocity(new Vec2(0,100));
-});
-movementTimer.addTask(1000,() => {
-    rectangleBody.setVelocity(new Vec2(-100,0));
-});
-movementTimer.addTask(1000,() => {
-    rectangleBody.setVelocity(new Vec2(0,-100));
-});
-movementTimer.startAndRepeat();
-player.attachComponent(movementTimer);
+let playerController = userControlSystem.createPlayerControlComponent(rectangleBody);
+let collisionDetector = collisionDetectionSystem.createCollisionDetectionComponent();
 player.attachComponent(rectangleBody);
 player.attachComponent(playerRenderer);
+player.attachComponent(playerController);
+player.attachComponent(collisionDetector);
 
 
 MainLoop.setSimulationTimestep(config.timestep)
 .setBegin(() => {
-
+    userControlSystem.update();
 }).setUpdate((delta) => {
     let scaledDelta = delta/1000;
-    timerSystem.update(delta);
     physicsSystem.update(scaledDelta);
+    collisionDetectionSystem.update();
 }).setDraw(() => {
     graphicsSystem.update();
 }).start();
-},{"./config":61,"./entity":63,"./system/graphics-system":64,"./system/physics-system":65,"./system/timer-system":66,"./vec2":67,"mainloop.js":39}],63:[function(require,module,exports){
+},{"./config":62,"./entity":64,"./system/collision-detection-system":65,"./system/graphics-system":66,"./system/physics-system":68,"./system/user-control-system":70,"./vec2":71,"mainloop.js":39}],64:[function(require,module,exports){
 const uuid = require("uuid").v4;
 
 class Entity {
@@ -44922,7 +44870,98 @@ class Entity {
 }
 
 module.exports = Entity;
-},{"uuid":53}],64:[function(require,module,exports){
+},{"uuid":53}],65:[function(require,module,exports){
+const CollisionDetectionComponent = require("../component/collision-detection-component");
+
+class CollisionDetectionSystem {
+    constructor() {
+        this.components = [];
+    }
+
+    createCollisionDetectionComponent() {
+        let component = new CollisionDetectionComponent();
+        this.components.push(component);
+        return component;
+    }
+
+    update() {
+        
+    }
+
+    checkCollision(p1,p2) {
+        let smallestIndex = -1;
+        let smallestValue = Number.MAX_VALUE;
+        let allNormals = [...getNormalAxes(p1.points),...getNormalAxes(p2.points)]
+        for(var i in allNormals) {
+            let projected1 = projectPolygonToAxis(allNormals[i],p1.points);
+            let projected2 = projectPolygonToAxis(allNormals[i],p2.points);
+            let flattened1 = flattenPoints(allNormals[i],projected1);
+            let flattened2 = flattenPoints(allNormals[i],projected2);
+            if(flattened1.x >= flattened2.y || flattened2.x >= flattened1.y) {
+                return false;
+            }
+            else {
+                let overlap = measureOverlap(flattened1,flattened2);
+                if(Math.abs(overlap) < Math.abs(smallestValue)) {
+                    smallestValue = overlap;
+                    smallestIndex = i;
+                }
+            }
+        }
+        return allNormals[smallestIndex].scale(smallestValue);
+    }
+    
+    measureOverlap(flattened1,flattened2) {
+        if(flattened1.x < flattened2.x) {
+            if(flattened1.y < flattened2.y) {
+                return flattened1.y - flattened2.x;
+            }
+            else {
+                const option1 = flattened1.y - flattened2.x;
+                const option2 = flattened2.y - flattened1.x;
+                return option1 < option2 ? option1 : -option2;
+            }
+        }
+        else {
+            if (flattened1.y > flattened2.y) {
+                return flattened1.x - flattened2.y;
+            }
+            else {
+                const option1 = flattened1.y - flattened2.x;
+                const option2 = flattened2.y - flattened1.x;
+                return option1 < option2 ? option1 : -option2;
+            }
+        }
+    }
+    
+    flattenPoints(normal,pointArray) {
+        let min = Number.MAX_VALUE;
+        let max = -Number.MAX_VALUE;
+        const len = pointArray.length;
+        for (var i = 0; i < len; i++ ) {
+        const dot = pointArray[i].dot(normal);
+            if (dot < min) { min = dot; }
+            if (dot > max) { max = dot; }
+        }
+        return new Vec2(min,max);
+    }
+    
+    getNormalAxes(polygon) {
+        let normals = [];
+        for(var i=1;i<polygon.length;i++) {
+            normals.push(polygon[i].subtract(polygon[i-1]));
+        }
+        normals.push(polygon[0].subtract(polygon[polygon.length-1]));
+        return normals.map(x => x.normal());
+    }
+    
+    projectPolygonToAxis(axis,polygon) {
+        return polygon.map(point => axis.scale(point.dot(axis)/axis.dot(axis)));
+    }
+}
+
+module.exports = CollisionDetectionSystem;
+},{"../component/collision-detection-component":58}],66:[function(require,module,exports){
 const PIXI = require("pixi.js");
 
 const config = require("../config");
@@ -44954,7 +44993,54 @@ class GraphicsSystem {
 }
 
 module.exports = GraphicsSystem;
-},{"../component/polygon-renderer-component":58,"../config":61,"pixi.js":43}],65:[function(require,module,exports){
+},{"../component/polygon-renderer-component":60,"../config":62,"pixi.js":43}],67:[function(require,module,exports){
+class KeyboardControlSystem {
+    constructor() {        
+        this.controls = {
+            up: false,
+            down: false,
+            left: false,
+            right: false
+        }
+
+        document.addEventListener('keydown', (ev) => {
+            if(ev.code === "KeyW") {
+                this.controls.up = true;
+            }
+            if(ev.code === "KeyS") {
+                this.controls.down = true;
+            }
+            if(ev.code === "KeyA") {
+                this.controls.left = true;
+            }
+            if(ev.code === "KeyD") {
+                this.controls.right = true;
+            }
+        });
+        
+        document.addEventListener('keyup', (ev) => {
+            if(ev.code === "KeyW") {
+                this.controls.up = false;
+            }
+            if(ev.code === "KeyS") {
+                this.controls.down = false;
+            }
+            if(ev.code === "KeyA") {
+                this.controls.left = false;
+            }
+            if(ev.code === "KeyD") {
+                this.controls.right = false;
+            }
+        });
+    }
+
+    getControls() {
+        return this.controls;
+    }
+}
+
+module.exports = KeyboardControlSystem;
+},{}],68:[function(require,module,exports){
 const RectangleBodyComponent = require("../component/rectangle-body-component");
 
 class PhysicsSystem {
@@ -44976,29 +45062,173 @@ class PhysicsSystem {
 }
 
 module.exports = PhysicsSystem;
-},{"../component/rectangle-body-component":59}],66:[function(require,module,exports){
-const TimerComponent = require("../component/timer-component");
+},{"../component/rectangle-body-component":61}],69:[function(require,module,exports){
+const config = require("../config");
 
-class TimerSystem {
+class TouchControlSystem {
+    constructor() {        
+        this.controls = {
+            up: false,
+            down: false,
+            left: false,
+            right: false
+        }
+
+        this.backgroundSize = 50;
+        this.containerSize = 100;
+        this.controlLimit = 20;
+        this.currentAngleNr = -1;
+
+        this.controlElement = document.createElement("div");
+        this.controlElement.className = "control-large";
+        let rootElement = document.getElementById(config.DOMContainerElementID);
+        rootElement.appendChild(this.controlElement);
+
+        this.touchHandler = (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            let touch = e.changedTouches[0];
+            let touchX = touch.clientX-this.controlElement.offsetLeft;
+            let touchY = touch.clientY-this.controlElement.offsetTop;
+            let nX = touchX - this.containerSize/2;
+            let nY = touchY - this.containerSize/2;
+            if(nX*nX+nY*nY>this.controlLimit) {
+                nX = this.controlLimit*nX/Math.sqrt(nX*nX+nY*nY);
+                nY = this.controlLimit*nY/Math.sqrt(nX*nX+nY*nY);
+            }
+            this.controlElement.style.backgroundPosition = `${nX+this.backgroundSize/2}px ${nY+this.backgroundSize/2}px`;
+            let offset = Math.PI/8;
+            let angle = -Math.atan2(nY,nX);
+            if(angle<0) {
+                angle+=Math.PI*2;
+            }
+            if((angle<=0+offset && angle>0) || (angle<=Math.PI*2 && angle>=Math.PI*2-offset)) {
+                let angleNr = 0;
+                if(this.currentAngleNr!==angleNr) {
+                    this.currentAngleNr = angleNr;
+                    this.controls.up = this.controls.down = this.controls.left = false;
+                    this.controls.right = true;
+                }
+                
+            }
+            else if(angle<=Math.PI/4+offset && angle>=Math.PI/4-offset) {
+                let angleNr = 1;
+                if(this.currentAngleNr!==angleNr) {
+                    this.currentAngleNr = angleNr;
+                    this.controls.down = this.controls.left = false;
+                    this.controls.up = this.controls.right = true;
+                }
+            }
+            else if(angle<=Math.PI/2+offset && angle>=Math.PI/2-offset) {
+                let angleNr = 2;
+                if(this.currentAngleNr!==angleNr) {
+                    this.currentAngleNr = angleNr;
+                    this.controls.right = this.controls.down = this.controls.left = false;
+                    this.controls.up =  true;
+                }
+            }
+            else if(angle<=3*Math.PI/4+offset && angle>=3*Math.PI/4-offset) {
+                let angleNr = 3;
+                if(this.currentAngleNr!==angleNr) {
+                    this.currentAngleNr = angleNr;
+                    this.controls.right = this.controls.down = false;
+                    this.controls.left = this.controls.up =  true;
+                }
+            }
+            else if(angle<=Math.PI+offset && angle>=Math.PI-offset) {
+                let angleNr = 4;
+                if(this.currentAngleNr!==angleNr) {
+                    this.currentAngleNr = angleNr;
+                    this.controls.up = this.controls.right = this.controls.down = false;
+                    this.controls.left = true;
+                }
+            }
+            else if(angle<=5*Math.PI/4+offset && angle>=5*Math.PI/4-offset) {
+                let angleNr = 5;
+                if(this.currentAngleNr!==angleNr) {
+                    this.currentAngleNr = angleNr;
+                    this.controls.up = this.controls.right = false;
+                    this.controls.down = this.controls.left = true;
+                }
+            }
+            else if(angle<=6*Math.PI/4+offset && angle>=6*Math.PI/4-offset) {
+                let angleNr = 6;
+                if(this.currentAngleNr!==angleNr) {
+                    this.currentAngleNr = angleNr;
+                    this.controls.left = this.controls.up = this.controls.right = false;
+                    this.controls.down = true;
+                }
+            }
+            else {
+                let angleNr = 7;
+                if(this.currentAngleNr!==angleNr) {
+                    this.currentAngleNr = angleNr;
+                    this.controls.left = this.controls.up = false;
+                    this.controls.right = this.controls.down = true;
+                }
+            }
+        };
+
+        this.controlElement.ontouchstart = this.touchHandler;
+        this.controlElement.ontouchmove = this.touchHandler;
+
+        this.controlElement.ontouchend = (e) => {
+            this.controlElement.style.backgroundPosition = `${this.containerSize/2-this.backgroundSize/2}px ${this.containerSize/2-this.backgroundSize/2}px`;
+            this.controls.up = this.controls.down = this.controls.left = this.controls.right = false;
+        }
+
+    }
+
+    getControls() {
+        return this.controls;
+    }
+}
+
+module.exports = TouchControlSystem;
+},{"../config":62}],70:[function(require,module,exports){
+const PlayerControlComponent = require("../component/player-control-component");
+const KeyboardControlSystem = require("./keyboard-control-system");
+const TouchControlSystem = require("./touch-control-system");
+
+class UserControlSystem {
     constructor() {
-        this.timers = [];
+        this.components = [];
+        this.keyboardControlSystem = new KeyboardControlSystem();
+        this.touchControlSystem = new TouchControlSystem();
+
+        this.controls = {
+            up: false,
+            down: false,
+            left: false,
+            right: false
+        }
     }
 
-    createTimerComponent() {
-        let timer = new TimerComponent();
-        this.timers.push(timer);
-        return timer;
+    createPlayerControlComponent(bodyComponent) {
+        let playerControlComponent = new PlayerControlComponent(bodyComponent, this);
+        this.components.push(playerControlComponent);
+        return playerControlComponent;
     }
 
-    update(deltaInMilliseconds) {
-        for(var i in this.timers) {
-            this.timers[i].update(deltaInMilliseconds);
+    getControls() {
+        const keyboardControls = this.keyboardControlSystem.getControls();
+        const touchControls = this.touchControlSystem.getControls();
+        this.controls.up = keyboardControls.up | touchControls.up;
+        this.controls.down = keyboardControls.down | touchControls.down;
+        this.controls.left = keyboardControls.left | touchControls.left;
+        this.controls.right = keyboardControls.right | touchControls.right;
+        return this.controls;
+    }
+
+    update() {
+        for(var i in this.components) {
+            this.components[i].update();
         }
     }
 }
 
-module.exports = TimerSystem;
-},{"../component/timer-component":60}],67:[function(require,module,exports){
+module.exports = UserControlSystem;
+},{"../component/player-control-component":59,"./keyboard-control-system":67,"./touch-control-system":69}],71:[function(require,module,exports){
 //Immutable vector class. All operations return a new object instead of modifying the existing vector.
 //Don't directly modify x and y
 
@@ -45115,4 +45345,4 @@ class Vec2 {
     }
 }
 module.exports = Vec2;
-},{}]},{},[62]);
+},{}]},{},[63]);
