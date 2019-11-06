@@ -16,16 +16,16 @@ let player = new Entity();
 let rectangleBody = physicsSystem.createRectangleBodyComponent(new Vec2(200,200), new Vec2(300,300));
 let playerRenderer = graphicsSystem.createPolygonRendererComponent(rectangleBody);
 let movementTimer = timerSystem.createTimerComponent();
-movementTimer.addTask(250,() => {
+movementTimer.addTask(1000,() => {
     rectangleBody.setVelocity(new Vec2(100,0));
 });
-movementTimer.addTask(250,() => {
+movementTimer.addTask(1000,() => {
     rectangleBody.setVelocity(new Vec2(0,100));
 });
-movementTimer.addTask(250,() => {
+movementTimer.addTask(1000,() => {
     rectangleBody.setVelocity(new Vec2(-100,0));
 });
-movementTimer.addTask(250,() => {
+movementTimer.addTask(1000,() => {
     rectangleBody.setVelocity(new Vec2(0,-100));
 });
 movementTimer.startAndRepeat();

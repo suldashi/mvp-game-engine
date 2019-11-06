@@ -12,7 +12,7 @@ class TimerComponent {
     update(deltaInMilliseconds) {
         if(this.started && !this.ended) {
             this.accumulatedTime+=deltaInMilliseconds;
-            if(this.accumulatedTime>this.tasks[this.taskIndex].time) {
+            while(this.accumulatedTime>this.tasks[this.taskIndex].time && !this.ended) {
                 this.tasks[this.taskIndex].callback();
                 this.taskIndex++;
                 if(this.taskIndex===this.tasks.length) {
