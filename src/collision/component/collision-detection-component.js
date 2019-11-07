@@ -1,6 +1,7 @@
 class CollisionDetectionComponent {
-    constructor() {
-        console.log("wodan");
+    constructor(bodyComponent, collisionTag) {
+        this.bodyComponent = bodyComponent;
+        this.collisionTag = collisionTag;
     }
 }
 

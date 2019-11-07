@@ -10,6 +10,15 @@ class RectangleBodyComponent {
         this.velocity = newVelocity;
     }
 
+    translate(translationVector) {
+        this.points.forEach(x => x.addToThis(translationVector));
+    }
+
+    teleport(newTopRightCorner) {
+        this.translate(this.points[0].neg());
+        this.translate(newTopRightCorner);
+    }
+
     update(delta) {
         this.points.forEach(x => x.addToThis(this.velocity.scale(delta)));
     }
