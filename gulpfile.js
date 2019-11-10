@@ -6,6 +6,11 @@ const source = require('vinyl-source-stream');
 
 let taskPath = "";
 
+function setSetupVar() {
+	taskPath = "setup";
+	return Promise.resolve();
+}
+
 function setIntroVar() {
 	taskPath = "intro";
 	return Promise.resolve();
@@ -46,6 +51,7 @@ function compress() {
 //gulp.task('minify', compress);
 
 gulp.task("browserify", bundle);
+gulp.task("setSetupVar", setSetupVar);
 gulp.task("setIntroVar", setIntroVar);
 gulp.task("setTimersVar", setTimersVar);
 gulp.task("setCollisionVar", setCollisionVar);
@@ -53,6 +59,7 @@ gulp.task("setCollisionVar", setCollisionVar);
 //gulp.task("prod",gulp.series("browserify","minify"));
 //gulp.task("dev", gulp.series("browserify"));
 
+gulp.task("setup", gulp.series("setSetupVar","browserify"));
 gulp.task("intro", gulp.series("setIntroVar","browserify"));
 gulp.task("timers", gulp.series("setTimersVar","browserify"));
 gulp.task("collision", gulp.series("setCollisionVar","browserify"));
