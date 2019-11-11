@@ -4,7 +4,7 @@
 	<link rel="stylesheet" type="text/css" target="_blank" href="../style.css">
 </head>
 <body>
-	<div id="root"></div>
+	<div id="pixi-container"></div>
 	<article>
 		<h1>Lesson 0 - Intro</h1>
 		<h3>In this article we will be setting up the infrastructure to build the JavaScript file that will be served to the players, the main game loop, and the capability to draw things on the screen.</h3>
@@ -132,7 +132,7 @@ gulp.task("watch", watch);</pre>
 		</p>
 		<p>
 			As mentioned before, the game loop runs at a constant rate. One execution of the game loop is called a frame (or tick), and the time between two frames is called a timestep (or delta).
-			To make the simulation consistent, the game loop runs at a fixed timestep, even if the input and rendering may run at a different and variable timestep.
+			To make the game simulation consistent, the game loop runs at a fixed timestep, even if the input and rendering may run at a different and variable timestep.
 			A timestep of 16.6666ms would run the game loop 60 times per second, or 60 FPS. 
 		</p>
 		<p>
@@ -151,8 +151,7 @@ let loopCounter = 0;
 MainLoop.setUpdate(() => {
 	console.log("The game loop has been executed " + loopCounter + " times.");
 	loopCounter++;
-}).start();
-			</pre>
+}).start();</pre>
 			Save this code to the <code>engine.js</code> file, run <code>gulp</code> to build the game, and navigate to <code>http://localhost:8080</code> to see it in action.
 			Open the development console, and if it looks something like this, it means the game loop is running successfully:
 			<img class="screenshot" src="img/gameloop.png" />
@@ -161,7 +160,132 @@ MainLoop.setUpdate(() => {
 			Note the <code>setUpdate()</code> function. The callback here is the heart of the game loop, and this function runs every frame.
 			The entire game world is simulated in this function, including physics, AI, game rules, and most other systems that make up a video game.
 		</p>
-		<h4>Drawing the game on the screen</h4>
+		<h4>Setting up PixiJS</h4>
+		<p>
+			Almost all video games need some sort of visual display, and ours will be no different. 
+			Just like the game loop, programming an entire graphical system is very complicated, so we'll use a library called <a href="https://www.pixijs.com/">PixiJS</a>.
+			Install PixiJS using this command:
+			<code class="codeblock">npm install --save pixi.js</code>
+		</p>
+		<p>
+			Before adding PixiJS to our game, we must first add a container element in our <code>public/index.html</code> file.
+			PixiJS draws the graphics in an HTML <code>&lt;canvas&gt;</code> element, so this canvas will need to be attached to this container.
+			We'll give this container a prominent ID, and it should look something like this:
+			<pre class="codeblock">
+&lt;!doctype html&gt;
+&lt;html&gt;
+&lt;head&gt;
+	&lt;title&gt;Made using the MVP engine&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+	&lt;div id="pixi-container"&gt;&lt;/div&gt;>
+	&lt;script src="/public/js/engine.js"&gt;&lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;</pre>
+		</p>
+		<p>
+			Now that the PixiJS container exist, we can go ahead and add the PixiJS code to our game, in the <code>src/engine.js</code> file.
+			It should look something like this:
+			<pre class="codeblock">
+const MainLoop = require("mainloop.js");
+const PIXI = require("pixi.js");
+
+let pixiApp = new PIXI.Application();
+let pixiContainer = document.getElementById("pixi-container");
+pixiContainer.appendChild(pixiApp.view);
+
+let loopCounter = 0;
+
+MainLoop.setUpdate(() => {
+	console.log("The game loop has been executed " + loopCounter + " times.");
+	loopCounter++;
+}).start();
+			</pre>
+			After building the game and refreshing the page, you should see a black rectangle, which is the default PixiJS background color.
+			We can also inspect the page using the browser's development tools, and it should look something like this:
+			<img class="screenshot" src="img/pixi.png" />
+		</p>
+		<h4>Drawing things on the screen with PixiJS</h4>
+		<p>
+			Let's draw something a bit more interesting than a black screen.
+		</p>
+		<p>
+			One of the features of PixiJS is the ability to draw primitive shapes, such as lines, circles, rectangles, and other polygons.
+			This is done using the <code>PIXI.graphics</code> class, and all we have to do is make an instance of that class and attach it to the default PixiJS stage.
+			Here's how our <code>engine.js</code> file would look like:
+			<pre class="codeblock">
+const MainLoop = require("mainloop.js");
+const PIXI = require("pixi.js");
+
+let pixiApp = new PIXI.Application();
+let pixiContainer = document.getElementById("pixi-container");
+let pixiGraphics = new PIXI.Graphics();
+pixiApp.stage.addChild(pixiGraphics);
+pixiContainer.appendChild(pixiApp.view);
+
+let loopCounter = 0;
+
+MainLoop.setUpdate(() => {
+	console.log("The game loop has been executed " + loopCounter + " times.");
+	loopCounter++;
+}).start();
+			</pre>
+			If the browser console is not giving out any errors, we've successfully added the graphics object to PixiJS.
+		</p>
+		<p>
+			Drawing using the <code>PIXI.graphics</code> class is quite easy. Let's draw a triangle and examine the details:
+			<pre class="codeblock">
+pixiGraphics.beginFill(0x00FF00);
+pixiGraphics.drawPolygon([50,50,200,50,50,200]);
+pixiGraphics.endFill();
+			</pre>
+			We should see a green triangle on the black canvas.
+		</p>
+		<p>
+			Notice the three methods, <code>beginFill()</code>, <code>drawPolygon()</code>, and <code>endFill()</code>.
+		</p>
+		<p>
+			<code>beginFill()</code> initializes the <code>PIXI.graphics</code> drawing method, and also sets the fill color of the drawn shape.
+			In our case, the first parameter of <code>beginFill()</code> is a hexadecimal code representing the color green in the RGB color space.
+		</p>
+		<p>
+			<code>drawPolygon()</code> is responsible for actually drawing the triangle on the screen. It's accepts an array of numbers as an argument.
+			These numbers are the coordinates of the vertices of the triangle, and are ordered such that the first element of the array is the x coordinate of the first point,
+			the second element is the y coordinate of the first point, the third element is the x coordinate of the second point, and so on.
+			<img class="screenshot" src="img/coords.png" />
+		</p>
+		<p>
+			<code>endFill()</code> finishes drawing the polygon. This function is needed so that subsequent calls to <code>beginFill()</code> will draw other polygons instead of continuing the current polygon.
+		</p>
+		<p>
+			The final version of the <code>engine.js</code> file should look like this:
+			<pre class="codeblock">
+const MainLoop = require("mainloop.js");
+const PIXI = require("pixi.js");
+
+let pixiApp = new PIXI.Application();
+let pixiContainer = document.getElementById("pixi-container");
+let pixiGraphics = new PIXI.Graphics();
+pixiGraphics.beginFill(0x00FF00);
+pixiGraphics.drawPolygon([50,50,200,50,50,200]);
+pixiGraphics.endFill();
+pixiApp.stage.addChild(pixiGraphics);
+pixiContainer.appendChild(pixiApp.view);
+
+let loopCounter = 0;
+
+MainLoop.setUpdate(() => {
+	console.log("The game loop has been executed " + loopCounter + " times.");
+	loopCounter++;
+}).start();
+			</pre>
+		</p>
+		<h4>Conclusion</h4>
+		<p>
+			The web and JavaScript hold great promise as gaming platforms. 
+			The ability to distribute games and updates just by sharing a link is unmatched by any platform, and is the reason for the web's dominance in business and productivity apps.
+			I hope to show that the same capability is present in web games as well, and that JavaScript is mature enough to be not just a teaching tool, but a primary development language for games.
+		</p>
 	</article>
 	<script src="js/engine.js"></script>
 </body>

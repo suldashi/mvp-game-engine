@@ -45,15 +45,16 @@ h1,h2,h3,h4,h5,h6,p {
 
 article {
   padding: 20px;
-  width: 600px;
+  width: 700px;
 }
 
 .codeblock {
   display: block;
-  margin: 5px 0;
+  margin: 15px 0;
   padding: 5px 10px;
   tab-size: 4;
   background-color: #ddd;
+  font-size: 1em;
 }
 
 @media only screen and (max-device-width: 768px) {
@@ -82,5 +83,10 @@ article {
   
   .keyboard-controls {
     display: none;
+  }
+
+  article {
+    padding: 20px;
+    width: 100%;
   }
 }
