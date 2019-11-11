@@ -123,6 +123,8 @@ gulp.task("watch", watch);</pre>
 			Then, navigate to <code>http://localhost:8080</code> using your browser, and open the development console.
 			If everything worked correctly, you should see this message there:
 			<img class="screenshot" src="img/console.png"/>
+			At this point, your project directory should look something like this:
+			<img class="screenshot" src="img/dir.png" />
 		</p>
 		<h4>The game loop</h4>
 		<p>
@@ -190,7 +192,7 @@ MainLoop.setUpdate(() => {
 const MainLoop = require("mainloop.js");
 const PIXI = require("pixi.js");
 
-let pixiApp = new PIXI.Application();
+let pixiApp = new PIXI.Application({antialias: true});
 let pixiContainer = document.getElementById("pixi-container");
 pixiContainer.appendChild(pixiApp.view);
 
@@ -217,7 +219,7 @@ MainLoop.setUpdate(() => {
 const MainLoop = require("mainloop.js");
 const PIXI = require("pixi.js");
 
-let pixiApp = new PIXI.Application();
+let pixiApp = new PIXI.Application({antialias: true});
 let pixiContainer = document.getElementById("pixi-container");
 let pixiGraphics = new PIXI.Graphics();
 pixiApp.stage.addChild(pixiGraphics);
@@ -236,7 +238,7 @@ MainLoop.setUpdate(() => {
 			Drawing using the <code>PIXI.graphics</code> class is quite easy. Let's draw a triangle and examine the details:
 			<pre class="codeblock">
 pixiGraphics.beginFill(0x00FF00);
-pixiGraphics.drawPolygon([50,50,200,50,50,200]);
+pixiGraphics.drawPolygon([60,70,190,50,40,200]);
 pixiGraphics.endFill();
 			</pre>
 			We should see a green triangle on the black canvas.
@@ -263,11 +265,11 @@ pixiGraphics.endFill();
 const MainLoop = require("mainloop.js");
 const PIXI = require("pixi.js");
 
-let pixiApp = new PIXI.Application();
+let pixiApp = new PIXI.Application({antialias: true});
 let pixiContainer = document.getElementById("pixi-container");
 let pixiGraphics = new PIXI.Graphics();
 pixiGraphics.beginFill(0x00FF00);
-pixiGraphics.drawPolygon([50,50,200,50,50,200]);
+pixiGraphics.drawPolygon([60,70,190,50,40,200]);
 pixiGraphics.endFill();
 pixiApp.stage.addChild(pixiGraphics);
 pixiContainer.appendChild(pixiApp.view);
