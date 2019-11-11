@@ -4,9 +4,27 @@
 	<link rel="stylesheet" type="text/css" href="../style.css">
 </head>
 <body>
-	<div id="root"></div>
+	<div id="pixi-container"></div>
 	<div class="keyboard-controls control-instruction">Move the player using WASD keys on the keyboard.</div>
-	<div class="touch-controls control-instruction">Move the player using the virtual joystick at the bottom right of the game.</div>
+	<article>
+		<h1>Lesson 2 - The basics of ECS</h1>
+		<h3>The Entity Component System (ECS) is an architectural pattern that is particularly suited to video game development.
+			In this article we'll implement a basic example with multiple systems and components.</h3>
+		<h4>What is ECS?</h4>
+		<p>
+			In classic Object-oriented programming, a computer program is designed around objects, which contain all the data and logic needed for their operation.
+			These objects are usually defined through classes, which serve as templates for creating many objects of the same type.
+			To enable code reuse, classes may inherit from each other, taking on all the attributes and functionality of their parent class.
+			However, this can lead to brittle design and deep levels of inheritance, making it difficult to reason about the inner workings of classes or extend them without risking breaking functionality somewhere else.
+			In addition, <a target="_blank" href="https://en.wikipedia.org/wiki/Multiple_inheritance">multiple inheritance is very complex</a>, making lateral code reuse difficult.
+		</p>
+		<p>
+			ECS takes a different approach from OOP.
+			In ECS, all game objects are <em>entities</em> which are made up of multiple <em>components</em> attached to them that define their data and functionality.
+			The behavior of these components is managed by various <em>systems</em> that interact in various ways to implement the rules of the video game.
+			This way, we can attach components to entities at will, allowing us to create unique objects at runtime.
+		</p>
+	</article>
 	<script src="js/engine.js"></script>
 </body>
 </html>

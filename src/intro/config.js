@@ -5,5 +5,5 @@ module.exports = {
     screenWidth: 600,
     screenHeight: 600,
     timestep,
-    DOMContainerElementID: "root"
+    DOMContainerElementID: "pixi-container"
 }
